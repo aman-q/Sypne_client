@@ -13,7 +13,6 @@ const LoginPage = () => {
       .email('Invalid email address')
       .required('Email is required'),
     password: Yup.string()
-      .min(6, 'Password must be at least 6 characters')
       .required('Password is required'),
   });
 
@@ -21,11 +20,11 @@ const LoginPage = () => {
   const handleSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
       const response = await axios.post('https://carhubbackend-production.up.railway.app/api/user/login', values);
-      // Store the token and redirect
       localStorage.setItem('authToken', response.data.token);
+      localStorage.setItem('userinfo', JSON.stringify(response.data.data));
       navigate('/');
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Login failed. Please try again.';
+      const errorMessage = error.response?.data?.message || 'Invalid Credential';
       setErrors({ email: errorMessage });
     } finally {
       setSubmitting(false);

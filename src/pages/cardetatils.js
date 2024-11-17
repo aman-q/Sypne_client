@@ -14,7 +14,7 @@ import {
 import Navbar from '../components/hedder';
 
 const CarDetailsPage = () => {
-  const { id } = useParams(); // Get the car ID from the URL
+  const { id } = useParams();
   const [carDetails, setCarDetails] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -24,13 +24,22 @@ const CarDetailsPage = () => {
     // Fetch car details when component mounts
     const fetchCarDetails = async () => {
       try {
-        const response = await axios.get(`https://carhubbackend-production.up.railway.app/cars/${id}`);
+        // Retrieve the token from localStorage
+        const token = localStorage.getItem('authToken');
+        
+        // Include the token in the Authorization header
+        const response = await axios.get(`https://carhubbackend-production.up.railway.app/api/cars/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // Set the token in the header
+          },
+        });
+        
         setCarDetails(response.data);
       } catch (error) {
         console.error('Error fetching car details:', error);
       }
     };
-
+  
     fetchCarDetails();
   }, [id]);
 
@@ -99,7 +108,7 @@ const CarDetailsPage = () => {
                   {carDetails.cardeatil.title}
                 </h1>
                 <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium shadow-sm">
-                  {carDetails.cardeatil.tags.car_type}
+                  {carDetails?.cardeatil?.tags?.car_type}
                 </span>
               </div>
               <p className="text-gray-600 mb-8 text-lg">
@@ -127,13 +136,13 @@ const CarDetailsPage = () => {
                     <p className="font-semibold text-lg">{carDetails.cardeatil.driveType}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4 bg-slate-50 p-4 rounded-xl">
+                {/* <div className="flex items-center space-x-4 bg-slate-50 p-4 rounded-xl">
                   <Car className="text-blue-600" size={28} />
                   <div>
                     <p className="text-sm text-gray-500">Type</p>
-                    <p className="font-semibold text-lg">{carDetails.cardeatil.tags.car_type}</p>
+                    <p className="font-semibold text-lg">{carDetails?.cardeatil?.tags.car_type}</p>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

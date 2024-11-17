@@ -41,8 +41,6 @@ const CarUploadForm = () => {
       setTagInput('');
     }
   };
-
-  // Remove tag
   const removeTag = (tagToRemove) => {
     setFormData({
       ...formData,
@@ -90,20 +88,26 @@ const CarUploadForm = () => {
     data.append('year', formData.year);
     data.append('company', formData.company);
     data.append('driveType', formData.driveType);
-    formData.tags.forEach((tag) => data.append('tags[]', tag));
+    // formData.tags.forEach((tag) => data.append('tags[]', tag));
     imageFiles.forEach((file) => data.append('images', file));
 
     try {
       // Make API request
-      const response = await axios.post('YOUR_API_ENDPOINT', data, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const token = localStorage.getItem("authToken");
+      const response = await axios.post(
+        'https://carhubbackend-production.up.railway.app/api/cars/',
+        data,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.status === 200 || response.status === 201) {
         alert('Car uploaded successfully!');
-        navigate('./'); // Navigate to the home page or desired route
+        navigate('/'); 
       }
     } catch (error) {
       console.error('Upload failed:', error);
@@ -168,7 +172,7 @@ const CarUploadForm = () => {
                   value={formData.year}
                   onChange={(e) => setFormData({ ...formData, year: e.target.value })}
                   className={`w-full px-4 py-2 border ${errors.year ? 'border-red-500' : 'border-gray-300'} rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition`}
-                  placeholder="2024"
+                  placeholder="2021"
                 />
                 {errors.year && <p className="text-red-500 text-sm">{errors.year}</p>}
               </div>
@@ -221,7 +225,7 @@ const CarUploadForm = () => {
             </div>
 
             {/* Tags */}
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
                 Tags
               </label>
@@ -251,7 +255,7 @@ const CarUploadForm = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                 placeholder="Type tag and press Enter"
               />
-            </div>
+            </div> */}
 
             {/* Image Upload */}
             <div className="space-y-2">
