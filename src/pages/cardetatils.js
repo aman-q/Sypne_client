@@ -65,7 +65,7 @@ const CarDetailsPage = () => {
       <Navbar />
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         {/* Image Carousel */}
         <div className="relative h-[28rem] rounded-2xl overflow-hidden mb-8 shadow-xl bg-white">
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />

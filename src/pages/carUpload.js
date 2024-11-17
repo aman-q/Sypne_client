@@ -167,7 +167,7 @@ const CarUploadForm = () => {
                   Year of Manufacture
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   id="year"
                   value={formData.year}
                   onChange={(e) => setFormData({ ...formData, year: e.target.value })}
