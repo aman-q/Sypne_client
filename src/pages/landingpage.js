@@ -13,6 +13,7 @@ const CarLandingPage = () => {
   const [userCarsLoading, setUserCarsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [viewMyCars, setViewMyCars] = useState(false);
+  const authToken = localStorage.getItem('authToken');
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -127,17 +128,23 @@ const CarLandingPage = () => {
               {viewMyCars ? 'Your Cars' : 'Available Cars'}
             </h2>
             <div className="flex space-x-4">
-              <Link to="/car-upload" className="px-6 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors">
-                Upload Car
-              </Link>
-              <button
-                onClick={handleMyCarsClick}
-                className={`px-6 py-2 rounded-full text-white transition-colors ${
-                  viewMyCars ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
-                }`}
-              >
-                {viewMyCars ? 'All Cars' : 'My Cars'}
-              </button>
+              {authToken && (
+                <Link
+                  to="/car-upload"
+                  className="px-6 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                >
+                  Upload Car
+                </Link>
+              )}
+              {authToken && (
+                <button
+                  onClick={handleMyCarsClick}
+                  className={`px-6 py-2 rounded-full text-white transition-colors ${viewMyCars ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
+                >
+                  {viewMyCars ? 'All Cars' : 'My Cars'}
+                </button>
+              )}
             </div>
           </div>
 
