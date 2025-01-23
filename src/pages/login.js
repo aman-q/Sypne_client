@@ -15,7 +15,6 @@ const LoginPage = () => {
     password: Yup.string()
       .required('Password is required'),
   });
-
   // Handle form submission
   const handleSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
