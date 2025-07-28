@@ -6,6 +6,7 @@ import CarUploadForm from './pages/carUpload';
 import CarLandingPage from './pages/landingpage';
 import ProtectedRoute from './components/protectedRoute';
 import CarDetailsPage from './pages/cardetatils';
+import OTPVerification from './pages/verify-otp';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/" element={<CarLandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-otp" element={<OTPVerification />} />
 
         {/* Protected Routes */}
         <Route

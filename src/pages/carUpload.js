@@ -95,7 +95,7 @@ const CarUploadForm = () => {
       // Make API request
       const token = localStorage.getItem("authToken");
       const response = await axios.post(
-        'https://carhubbackend-production.up.railway.app/api/cars/',
+        `${process.env.REACT_APP_API}/api/cars/`,
         data,
         {
           headers: {

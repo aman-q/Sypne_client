@@ -28,7 +28,7 @@ const CarDetailsPage = () => {
         const token = localStorage.getItem('authToken');
         
         // Include the token in the Authorization header
-        const response = await axios.get(`https://carhubbackend-production.up.railway.app/api/cars/${id}`, {
+        const response = await axios.get(`${process.env.REACT_APP_API}/api/cars/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`, // Set the token in the header
           },

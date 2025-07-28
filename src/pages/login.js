@@ -15,16 +15,17 @@ const LoginPage = () => {
     password: Yup.string()
       .required('Password is required'),
   });
+
   // Handle form submission
   const handleSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
-      const response = await axios.post('https://carhubbackend-production.up.railway.app/api/user/login', values);
+      const response = await axios.post(`${process.env.REACT_APP_API}/api/user/login`, values);
       localStorage.setItem('authToken', response.data.token);
       localStorage.setItem('userinfo', JSON.stringify(response.data.data));
       navigate('/');
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Invalid Credential';
-      setErrors({ email: errorMessage });
+      setErrors({ password: errorMessage });
     } finally {
       setSubmitting(false);
     }
@@ -39,22 +40,25 @@ const LoginPage = () => {
           backgroundImage: "url('/backgroung.jpg')",
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/50"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/60"></div>
       </div>
 
-      {/* Form Container */}
-      <div className="relative z-10 bg-white shadow-lg rounded-xl p-6 sm:p-8 lg:p-10 max-w-xs w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-md border border-gray-200">
+      {/* Form Container - SaaS-like improvements */}
+      <div className="relative z-10 bg-white/95 backdrop-blur-sm shadow-2xl rounded-2xl p-6 sm:p-8 lg:p-10 max-w-xs w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-md border border-gray-100">
         <div className="text-center mb-6 sm:mb-8">
-          <img 
-            src="/logo.png" 
-            alt="Car Logo" 
-            className="mx-auto h-10 sm:h-12 w-auto mb-4 bg-inherit"
-          />
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">
+          <div className="mx-auto w-20 h-20 bg-white/20 border border-white/30 rounded-xl flex items-center justify-center mb-4">
+            <img 
+              src="/logo.png" 
+              alt="Car Logo" 
+              className="h-24 w-24 object-contain"
+            />
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             Welcome Back
           </h2>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">
-            Drive your dreams with us!
+          <p className="text-sm sm:text-base text-gray-600">
+            Sign in to your account
           </p>
         </div>
 
@@ -64,50 +68,64 @@ const LoginPage = () => {
           onSubmit={handleSubmit}
         >
           {({ isSubmitting }) => (
-            <Form className="space-y-4 sm:space-y-6">
+            <Form className="space-y-5 sm:space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
                   Email Address
                 </label>
                 <Field
                   id="email"
                   name="email"
                   type="email"
-                  className="mt-1 block w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                  placeholder="you@example.com"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
+                  placeholder="Enter your email"
                 />
-                <ErrorMessage name="email" component="p" className="text-xs text-red-600 mt-1" />
+                 <ErrorMessage name="email" component="p" className="text-xs text-red-500 mt-2  font-medium text-center" />
+               
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
                   Password
                 </label>
                 <Field
                   id="password"
                   name="password"
                   type="password"
-                  className="mt-1 block w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                  placeholder="********"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
+                  placeholder="Enter your password"
                 />
-                <ErrorMessage name="password" component="p" className="text-xs text-red-600 mt-1" />
+
+               
+                <ErrorMessage name="password" component="p" className="text-xs text-red-500 mt-2  font-medium text-center" />
               </div>
+              
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-2 sm:py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-transform transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Signing In...' : 'Sign In'}
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Signing In...
+                  </span>
+                ) : (
+                  'Sign In'
+                )}
               </button>
             </Form>
           )}
         </Formik>
 
-        <div className="mt-4 sm:mt-6 text-center">
-          <p className="text-xs sm:text-sm text-gray-600">
+        <div className="mt-6 sm:mt-8 text-center">
+          <p className="text-sm text-gray-600">
             Don't have an account?{' '}
-            <a href='/register' className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
-              Sign up
+            <a href='/register' className="text-blue-600 hover:text-blue-700 font-semibold transition-colors hover:underline">
+              Create Account
             </a>
           </p>
         </div>
@@ -115,4 +133,5 @@ const LoginPage = () => {
     </div>
   );
 };
+
 export default LoginPage;

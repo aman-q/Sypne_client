@@ -18,7 +18,7 @@ const CarLandingPage = () => {
   useEffect(() => {
     const fetchCars = async () => {
       try {
-        const response = await axios.get('https://carhubbackend-production.up.railway.app/api/cars/');
+        const response = await axios.get(`${process.env.REACT_APP_API}/api/cars/`);
         const fetchedCars = Array.isArray(response.data) ? response.data : response.data.cars || [];
         setCars(fetchedCars);
         setLoading(false);
@@ -41,7 +41,7 @@ const CarLandingPage = () => {
 
     try {
       setUserCarsLoading(true);
-      const response = await axios.get('https://carhubbackend-production.up.railway.app/cars/usercars', {
+      const response = await axios.get(`${process.env.REACT_APP_API}/cars/usercars`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
