@@ -33,33 +33,41 @@ const Register = () => {
   });
 
   // Handle form submission
-  const handleSubmit = async (values, { setSubmitting, setErrors }) => {
-    try {
-      const payload = {
-        email: values.email,
-        password: values.password,
-        fname: values.firstName,
-        lname: values.lastName,
-        phonenumber: values.phone,
-      };
+ const handleSubmit = async (values, { setSubmitting, setErrors }) => {
+  try {
+    const payload = {
+      email: values.email,
+      password: values.password,
+      fname: values.firstName,
+      lname: values.lastName,
+      phonenumber: values.phone,
+    };
 
-      const response = await axios.post(
-        `${process.env.REACT_APP_API}/api/user/register`,
-        payload
-      );
+    const response = await axios.post(
+      `${process.env.REACT_APP_API}/api/user/register`,
+      payload
+    );
 
-      // Navigate to login page on success
-      alert("Registration successful!");
-      navigate("/login");
-    } catch (error) {
-      // Handle errors and display to the user
-      const errorMessage =
-        error.response?.data?.message || "Registration failed. Please try again.";
-      setErrors({ email: errorMessage }); // Show error under the email field
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    // Store email in localStorage for OTP verification
+    localStorage.setItem('emailuser', values.email);
+
+    // Navigate to OTP verification page with email in state
+    alert("Registration successful!");
+    navigate("/verify-otp", { 
+      state: { 
+        email: values.email 
+      } 
+    });
+  } catch (error) {
+    // Handle errors and display to the user
+    const errorMessage =
+      error.response?.data?.message || "Registration failed. Please try again.";
+    setErrors({ email: errorMessage }); // Show error under the email field
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   return (
     <div className="relative min-h-screen bg-gray-50 flex items-center justify-center px-4 sm:px-6 lg:px-8">
