@@ -1,87 +1,238 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Car, User, BookOpen, LogOut, Plus, Menu, X } from 'lucide-react';
+import api, { clearAuth } from '../lib/api';
 
 const Navbar = () => {
-  const [userInfo, setUserInfo] = useState(null);
+  const [userInfo, setUserInfo]       = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileOpen, setMobileOpen]   = useState(false);
+  const dropdownRef = useRef(null);
+  const navigate    = useNavigate();
+  const location    = useLocation();
 
   useEffect(() => {
-    // Retrieve user information from localStorage
-    const storedUserInfo = localStorage.getItem("userinfo");
-    if (storedUserInfo) {
-      setUserInfo(JSON.parse(storedUserInfo));
+    const stored = localStorage.getItem('userinfo');
+    if (stored) {
+      try { setUserInfo(JSON.parse(stored)); } catch {}
     }
   }, []);
 
-  const handleLogout = () => {
-    // Clear user data from localStorage and update state
-    localStorage.removeItem("userinfo");
-    setUserInfo(null);
-    // Redirect to login page
-    window.location.href = "/login";
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => { setMobileOpen(false); setDropdownOpen(false); }, [location.pathname]);
+
+  const handleLogout = async () => {
+    try {
+      await api.post('/user/logout', { refreshToken: localStorage.getItem('refreshToken') });
+    } catch {}
+    finally {
+      clearAuth();
+      setUserInfo(null);
+      setDropdownOpen(false);
+      navigate('/login');
+    }
   };
 
-  const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
-  };
+  const isActive = (path) => location.pathname === path;
+
+  const navLinks = [
+    { href: '/',       label: 'Home' },
+    { href: '/browse', label: 'Browse Cars' },
+  ];
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 h-18 bg-gradient-to-b from-gray-50 to-white z-10">
-        <div className="absolute inset-0 bg-white bg-opacity-40">
-          <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
-        </div>
-      </div>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/70 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
 
-      {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/60 backdrop-blur-sm">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-12 xl:px-16">
-          <div className="flex justify-between items-center h-20">
-            {/* Left side - Logo */}
-            <div className="flex-shrink-0 flex items-center lg:ml-6 xl:ml-12">
-              <a href="/" className="flex items-center hover:opacity-90 transition-opacity">
-                <img
-                  className="h-12 w-auto"
-                  src="/logo.png"
-                  alt="Car App Logo"
-                />
-              </a>
+            {/* Logo */}
+            <a href="/" className="flex items-center shrink-0 hover:opacity-85 transition-opacity">
+              <img src="/logo.png" alt="CarHub" className="h-9 w-auto" />
+            </a>
+
+            {/* Center nav — desktop */}
+            <div className="hidden md:flex items-center space-x-1">
+              {navLinks.map(({ href, label }) => (
+                <a
+                  key={href}
+                  href={href}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+                    isActive(href)
+                      ? 'text-blue-600 bg-blue-50'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  {label}
+                </a>
+              ))}
             </div>
 
-            {/* Right side - Conditional Rendering */}
-            <div className="relative flex items-center space-x-4">
+            {/* Right side — desktop */}
+            <div className="hidden md:flex items-center space-x-2">
               {userInfo ? (
-                <div className="relative">
-                  <button
-                    onClick={toggleDropdown}
-                    className="text-gray-800 font-medium hover:bg-gray-200 px-4 py-2 rounded-lg transition duration-200"
+                <>
+                  <a
+                    href="/car-upload"
+                    className="flex items-center space-x-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all"
                   >
-                    Hello, {userInfo.firstName}!
-                  </button>
-                  {dropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg py-2">
-                      <button
-                        onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>List a Car</span>
+                  </a>
+
+                  {/* Avatar dropdown */}
+                  <div className="relative" ref={dropdownRef}>
+                    <button
+                      onClick={() => setDropdownOpen(v => !v)}
+                      className={`flex items-center space-x-2.5 pl-2 pr-3 py-1.5 rounded-xl border transition-all duration-150 ${
+                        dropdownOpen ? 'border-blue-200 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                        {userInfo.firstName?.[0]?.toUpperCase() || 'U'}
+                      </div>
+                      <span className="text-sm font-semibold text-gray-800">{userInfo.firstName}</span>
+                      <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {dropdownOpen && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden py-1.5">
+                        {/* User info header */}
+                        <div className="px-4 py-3 border-b border-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                              {userInfo.firstName?.[0]?.toUpperCase()}{userInfo.lastName?.[0]?.toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-gray-900 truncate">{userInfo.firstName} {userInfo.lastName}</p>
+                              <p className="text-xs text-gray-400 truncate">{userInfo.email}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Menu items */}
+                        <div className="py-1">
+                          <a href="/profile" className="flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <User className="w-4 h-4 text-gray-400" />
+                            <span>My Profile</span>
+                          </a>
+                          <a href="/profile" className="flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <BookOpen className="w-4 h-4 text-gray-400" />
+                            <span>My Bookings</span>
+                          </a>
+                          <a href="/car-upload" className="flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <Car className="w-4 h-4 text-gray-400" />
+                            <span>List a Car</span>
+                          </a>
+                        </div>
+
+                        <div className="border-t border-gray-100 py-1">
+                          <button
+                            onClick={handleLogout}
+                            className="flex items-center space-x-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            <span>Sign Out</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
               ) : (
-                <a href="/login">
-                  <button
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg active:scale-95 transform"
-                  >
-                    Login
-                  </button>
+                <div className="flex items-center space-x-2">
+                  <a href="/login" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors">
+                    Sign In
+                  </a>
+                  <a href="/register" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm">
+                    Get Started
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileOpen(v => !v)}
+              className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile menu */}
+        {mobileOpen && (
+          <div className="md:hidden border-t border-gray-100 bg-white/95 backdrop-blur-xl">
+            <div className="px-4 py-3 space-y-1">
+              {navLinks.map(({ href, label }) => (
+                <a
+                  key={href}
+                  href={href}
+                  className={`block px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                    isActive(href) ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {label}
                 </a>
+              ))}
+
+              {userInfo ? (
+                <>
+                  <a href="/car-upload" className="block px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    + List a Car
+                  </a>
+                  <a href="/profile" className="block px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    My Profile
+                  </a>
+                  <div className="pt-2 pb-1 border-t border-gray-100 mt-2">
+                    <div className="flex items-center space-x-3 px-3 py-2 mb-1">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                        {userInfo.firstName?.[0]?.toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{userInfo.firstName} {userInfo.lastName}</p>
+                        <p className="text-xs text-gray-400">{userInfo.email}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center space-x-2 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="pt-2 border-t border-gray-100 mt-2 flex flex-col space-y-2">
+                  <a href="/login" className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 text-center transition-colors border border-gray-200">
+                    Sign In
+                  </a>
+                  <a href="/register" className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 text-center transition-colors">
+                    Get Started
+                  </a>
+                </div>
               )}
             </div>
           </div>
-        </div>
+        )}
       </nav>
     </>
   );
 };
+
 export default Navbar;

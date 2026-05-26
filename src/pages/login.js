@@ -1,31 +1,28 @@
 import React from 'react';
 import { Formik, Field, Form, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import api from '../lib/api';
 
 const LoginPage = () => {
   const navigate = useNavigate();
 
-  // Validation Schema using Yup
   const validationSchema = Yup.object({
-    email: Yup.string()
-      .email('Invalid email address')
-      .required('Email is required'),
-    password: Yup.string()
-      .required('Password is required'),
+    email: Yup.string().email('Invalid email address').required('Email is required'),
+    password: Yup.string().required('Password is required'),
   });
 
-  // Handle form submission
   const handleSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API}/api/user/login`, values);
-      localStorage.setItem('authToken', response.data.token);
-      localStorage.setItem('userinfo', JSON.stringify(response.data.data));
+      const { data } = await api.post('/user/login', values);
+      // backend returns: { accessToken, refreshToken, data: { email, firstName, lastName, phoneNumber } }
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem('userinfo', JSON.stringify(data.data));
       navigate('/');
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Invalid Credential';
-      setErrors({ password: errorMessage });
+      const msg = error.response?.data?.message || 'Invalid credentials';
+      setErrors({ password: msg });
     } finally {
       setSubmitting(false);
     }
@@ -33,33 +30,20 @@ const LoginPage = () => {
 
   return (
     <div className="relative min-h-screen bg-gray-50 flex items-center justify-center px-4 sm:px-6 lg:px-8">
-      {/* Background Car Image */}
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage: "url('/backgroung.jpg')",
-        }}
+        style={{ backgroundImage: "url('/backgroung.jpg')" }}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/60"></div>
       </div>
 
-      {/* Form Container - SaaS-like improvements */}
       <div className="relative z-10 bg-white/95 backdrop-blur-sm shadow-2xl rounded-2xl p-6 sm:p-8 lg:p-10 max-w-xs w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-md border border-gray-100">
         <div className="text-center mb-6 sm:mb-8">
           <div className="mx-auto w-20 h-20 bg-white/20 border border-white/30 rounded-xl flex items-center justify-center mb-4">
-            <img 
-              src="/logo.png" 
-              alt="Car Logo" 
-              className="h-24 w-24 object-contain"
-            />
+            <img src="/logo.png" alt="Car Logo" className="h-24 w-24 object-contain" />
           </div>
-
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            Welcome Back
-          </h2>
-          <p className="text-sm sm:text-base text-gray-600">
-            Sign in to your account
-          </p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
+          <p className="text-sm sm:text-base text-gray-600">Sign in to your account</p>
         </div>
 
         <Formik
@@ -74,14 +58,11 @@ const LoginPage = () => {
                   Email Address
                 </label>
                 <Field
-                  id="email"
-                  name="email"
-                  type="email"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
+                  id="email" name="email" type="email"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-white text-gray-900"
                   placeholder="Enter your email"
                 />
-                 <ErrorMessage name="email" component="p" className="text-xs text-red-500 mt-2  font-medium text-center" />
-               
+                <ErrorMessage name="email" component="p" className="text-xs text-red-500 mt-2 font-medium text-center" />
               </div>
 
               <div>
@@ -89,21 +70,17 @@ const LoginPage = () => {
                   Password
                 </label>
                 <Field
-                  id="password"
-                  name="password"
-                  type="password"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
+                  id="password" name="password" type="password"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-white text-gray-900"
                   placeholder="Enter your password"
                 />
-
-               
-                <ErrorMessage name="password" component="p" className="text-xs text-red-500 mt-2  font-medium text-center" />
+                <ErrorMessage name="password" component="p" className="text-xs text-red-500 mt-2 font-medium text-center" />
               </div>
-              
+
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3.5 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <span className="flex items-center justify-center">
@@ -113,9 +90,7 @@ const LoginPage = () => {
                     </svg>
                     Signing In...
                   </span>
-                ) : (
-                  'Sign In'
-                )}
+                ) : 'Sign In'}
               </button>
             </Form>
           )}
@@ -124,7 +99,7 @@ const LoginPage = () => {
         <div className="mt-6 sm:mt-8 text-center">
           <p className="text-sm text-gray-600">
             Don't have an account?{' '}
-            <a href='/register' className="text-blue-600 hover:text-blue-700 font-semibold transition-colors hover:underline">
+            <a href="/register" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors hover:underline">
               Create Account
             </a>
           </p>

@@ -7,6 +7,8 @@ import CarLandingPage from './pages/landingpage';
 import ProtectedRoute from './components/protectedRoute';
 import CarDetailsPage from './pages/cardetatils';
 import OTPVerification from './pages/verify-otp';
+import ProfilePage from './pages/profile';
+import BrowseCarsPage from './pages/browsecars';
 
 function App() {
   return (
@@ -14,6 +16,7 @@ function App() {
       <Routes>
        
         <Route path="/" element={<CarLandingPage />} />
+        <Route path="/browse" element={<BrowseCarsPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-otp" element={<OTPVerification />} />
@@ -28,10 +31,18 @@ function App() {
           }
         />
         <Route
-          path="/car-details/:id" // Dynamic route for car details
+          path="/car-details/:id"
           element={
             <ProtectedRoute>
               <CarDetailsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
             </ProtectedRoute>
           }
         />

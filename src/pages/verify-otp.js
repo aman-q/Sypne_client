@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Formik, Form, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import axios from 'axios';
+import api from '../lib/api';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const OTPVerification = () => {
@@ -39,38 +39,16 @@ const OTPVerification = () => {
       }
     }
 
-    // Try to get from token (if email is encoded in token)
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      try {
-        // Decode JWT token to get email (if stored in token)
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        const decodedToken = JSON.parse(jsonPayload);
-        if (decodedToken.email) {
-          return decodedToken.email;
-        }
-      } catch (error) {
-        console.error('Error decoding token:', error);
-      }
-    }
-
     return '';
   };
 
-  const [email, setEmail] = useState(getEmailFromStorage());
-
-  // Save email to localStorage when component mounts
-  useEffect(() => {
-    const currentEmail = getEmailFromStorage();
-    if (currentEmail && !localStorage.getItem('emailuser')) {
-      localStorage.setItem('emailuser', currentEmail);
+  const [email] = useState(() => {
+    const e = getEmailFromStorage();
+    if (e && !localStorage.getItem('emailuser')) {
+      localStorage.setItem('emailuser', e);
     }
-    setEmail(currentEmail);
-  }, []);
+    return e;
+  });
 
   // Timer for resend OTP
   useEffect(() => {
@@ -164,30 +142,7 @@ const OTPVerification = () => {
     }
 
     try {
-      const otpCode = values.otpCode; // Use the Formik value directly
-
-      const response = await axios.post(
-        `${process.env.REACT_APP_API}/api/user/verify-otp`,
-        {
-          email: email,
-          otp: otpCode,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      // Store auth token and navigate to dashboard
-      if (response.data.token) {
-        localStorage.setItem('authToken', response.data.token);
-      }
-      if (response.data.data) {
-        localStorage.setItem('userinfo', JSON.stringify(response.data.data));
-      }
-      
-      // Clear emailuser from localStorage after successful verification
+      await api.post('/user/verify-otp', { email, otp: values.otpCode });
       localStorage.removeItem('emailuser');
       
       // Show success alert
@@ -216,17 +171,7 @@ const OTPVerification = () => {
     }
 
     try {
-      await axios.post(
-        `${process.env.REACT_APP_API}/api/user/resend-otp`,
-        { 
-          email: email 
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      await api.post('/user/resend-otp', { email });
       
       setResendTimer(60);
       setCanResend(false);

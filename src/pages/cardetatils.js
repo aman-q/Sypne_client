@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
+import api from '../lib/api';
 import { 
   ChevronLeft, 
   ChevronRight,
@@ -27,14 +27,12 @@ import {
   Settings,
   Camera,
   Eye,
-  Download,
   MessageSquare,
   ChevronDown,
   Zap,
   Globe,
   Lock,
-  TrendingUp,
-  PlayCircle
+  TrendingUp
 } from 'lucide-react';
 import Navbar from '../components/hedder';
 
@@ -56,88 +54,52 @@ const CarDetailsPage = () => {
     pickupLocation: '',
     dropoffLocation: ''
   });
-  const navigate = useNavigate(); 
+  const [toast, setToast] = useState(null); // { type: 'success'|'error', message }
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCarDetails = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        const token = localStorage.getItem('authToken');
-        
-        const response = await axios.get(
-          `${process.env.REACT_APP_API}/api/cars/${id}`, 
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        
-        console.log('Car details response:', response.data);
-        setCarDetails(response.data);
+        const { data } = await api.get(`/cars/${id}`);
+        // data = { car: {...}, availability: { isCurrentlyBooked, nextAvailableFrom, bookedPeriods } }
+        setCarDetails(data);
       } catch (error) {
-        console.error('Error fetching car details:', error);
         setError('Failed to load car details. Please try again.');
       } finally {
         setLoading(false);
       }
     };
-  
-    if (id) {
-      fetchCarDetails();
-    }
+    if (id) fetchCarDetails();
   }, [id]);
+
+  const showToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   // Handle booking submission
   const handleBooking = async (e) => {
     e.preventDefault();
-    
+    setBookingLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
-      
-      const startDate = new Date(bookingForm.startDate).toISOString();
-      const endDate = new Date(bookingForm.endDate).toISOString();
-      
-      const bookingData = {
+      await api.post('/booking/new-booking', {
         carId: id,
-        startDate: startDate,
-        endDate: endDate,
+        startDate: new Date(bookingForm.startDate).toISOString(),
+        endDate: new Date(bookingForm.endDate).toISOString(),
         pickupLocation: bookingForm.pickupLocation,
-        dropoffLocation: bookingForm.dropoffLocation
-      };
-
-      const response = await axios.post(
-        `${process.env.REACT_APP_API}/api/booking/new-booking`,
-        bookingData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      console.log('Booking successful:', response.data);
+        dropoffLocation: bookingForm.dropoffLocation,
+      });
       setShowBookingModal(false);
-      
-      // Show success animation
-      showSuccessToast('Booking confirmed! Check your email for details.');
-      
+      showToast('success', 'Booking confirmed! Check your email for details.');
     } catch (error) {
-      console.error('Booking failed:', error);
-      showErrorToast('Booking failed. Please try again.');
+      const msg = error.response?.data?.message || 'Booking failed. Please try again.';
+      showToast('error', msg);
+    } finally {
+      setBookingLoading(false);
     }
-  };
-
-  const showSuccessToast = (message) => {
-    // You can implement a proper toast library here
-    alert(message);
-  };
-
-  const showErrorToast = (message) => {
-    alert(message);
   };
 
   const nextImage = () => {
@@ -221,7 +183,7 @@ const CarDetailsPage = () => {
                 Try Again
               </button>
               <button
-                onClick={() => navigate(-1)}
+                onClick={() => navigate("/browse")}
                 className="px-8 py-4 bg-white border-2 border-gray-200 text-gray-700 rounded-2xl hover:border-gray-300 hover:bg-gray-50 transition-all duration-300 font-semibold"
               >
                 Go Back
@@ -245,7 +207,7 @@ const CarDetailsPage = () => {
             <h3 className="text-3xl font-bold text-gray-900 mb-4">Car Not Found</h3>
             <p className="text-gray-600 mb-8 text-lg">This luxury vehicle seems to have driven away!</p>
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/browse")}
               className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               Browse Other Cars
@@ -308,13 +270,26 @@ const CarDetailsPage = () => {
 
       <Navbar />
 
+      {/* Toast notification */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-[100] max-w-sm px-5 py-4 rounded-xl shadow-xl border text-sm font-medium flex items-start space-x-3 transition-all duration-300 ${
+          toast.type === 'success'
+            ? 'bg-green-50 border-green-200 text-green-800'
+            : 'bg-red-50 border-red-200 text-red-800'
+        }`}>
+          <span className="text-lg">{toast.type === 'success' ? '✅' : '❌'}</span>
+          <span>{toast.message}</span>
+          <button onClick={() => setToast(null)} className="ml-auto opacity-60 hover:opacity-100">✕</button>
+        </div>
+      )}
+
       {/* Enhanced Navigation with Breadcrumb */}
       <div className="pt-24 pb-4 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => navigate(-1)}
+                onClick={() => navigate("/browse")}
                 className="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-all duration-300 group bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg hover:shadow-xl"
               >
                 <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
@@ -587,11 +562,37 @@ const CarDetailsPage = () => {
                   )}
                 </div>
 
+                {/* Availability badge */}
+                {carDetails?.availability && (
+                  <div className={`mb-4 px-4 py-3 rounded-xl text-sm font-medium flex items-center space-x-2 ${
+                    carDetails.availability.isCurrentlyBooked
+                      ? 'bg-red-50 text-red-700 border border-red-200'
+                      : 'bg-green-50 text-green-700 border border-green-200'
+                  }`}>
+                    <span className="text-base">{carDetails.availability.isCurrentlyBooked ? '🔴' : '🟢'}</span>
+                    <div>
+                      {carDetails.availability.isCurrentlyBooked ? (
+                        <>
+                          <p className="font-semibold">Currently Unavailable</p>
+                          {carDetails.availability.nextAvailableFrom && (
+                            <p className="text-xs mt-0.5 font-normal">
+                              Available from {new Date(carDetails.availability.nextAvailableFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <p className="font-semibold">Available to Book</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Action Buttons */}
                 <div className="space-y-3">
                   <button
                     onClick={() => setShowBookingModal(true)}
-                    className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white py-4 px-6 rounded-2xl hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 transition-all duration-300 font-bold text-lg flex items-center justify-center space-x-3 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] relative overflow-hidden group"
+                    disabled={carDetails?.availability?.isCurrentlyBooked}
+                    className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white py-4 px-6 rounded-2xl hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 transition-all duration-300 font-bold text-lg flex items-center justify-center space-x-3 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                     <Zap size={24} />
@@ -993,10 +994,23 @@ const CarDetailsPage = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-2 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white py-4 px-8 rounded-2xl hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 transition-all duration-300 font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-[1.02] flex items-center justify-center space-x-3"
+                  disabled={bookingLoading}
+                  className="flex-2 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white py-4 px-8 rounded-2xl hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 transition-all duration-300 font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-[1.02] flex items-center justify-center space-x-3 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <CreditCard size={24} />
-                  <span>Confirm Reservation</span>
+                  {bookingLoading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                      <span>Confirming...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard size={24} />
+                      <span>Confirm Reservation</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
