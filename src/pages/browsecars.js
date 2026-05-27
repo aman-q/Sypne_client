@@ -72,7 +72,7 @@ const BrowseCarsPage = () => {
     }, { rootMargin: '200px', threshold: 0 });
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [visibleCount, filteredCars.length]);
+  }, [visibleCount, filteredCars.length, BATCH]);
 
   const visibleCars = filteredCars.slice(0, visibleCount);
   const hasMore     = visibleCount < filteredCars.length;
