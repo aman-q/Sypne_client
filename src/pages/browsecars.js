@@ -1,45 +1,43 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, X, Car, ArrowLeft } from 'lucide-react';
-import CarCard from '../components/carcard';
-import Navbar from '../components/hedder';
-import api from '../lib/api';
-
-const useDebounce = (value, delay) => {
-  const [deb, setDeb] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setDeb(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return deb;
-};
-
-const BATCH = 6;
+import CarCard from '../components/CarCard';
+import Navbar from '../components/Navbar';
+import Spinner from '../components/Spinner';
+import { getAllCars, getUserCars } from '../api/carsApi';
+import useCarFilters from '../hooks/useCarFilters';
 
 const BrowseCarsPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const [searchTerm, setSearchTerm]           = useState(searchParams.get('q') || '');
   const [cars, setCars]                        = useState([]);
   const [userCars, setUserCars]                = useState([]);
   const [loading, setLoading]                  = useState(true);
   const [userCarsLoading, setUserCarsLoading]  = useState(false);
   const [error, setError]                      = useState(null);
   const [viewMyCars, setViewMyCars]            = useState(false);
-  const [visibleCount, setVisibleCount]        = useState(BATCH);
   const [showFilters, setShowFilters]          = useState(false);
-  const [filters, setFilters] = useState({
-    company: '', driveType: '', minPrice: '', maxPrice: '', sortBy: '',
-  });
 
   const sentinelRef = useRef(null);
   const isLoggedIn  = !!localStorage.getItem('accessToken');
-  const debouncedSearch = useDebounce(searchTerm, 300);
+
+  const sourceList = viewMyCars ? userCars : cars;
+
+  const {
+    searchTerm, setSearchTerm,
+    filters, setFilters,
+    filteredCars,
+    companies, driveTypes,
+    activeFilterCount, clearFilters,
+    BATCH,
+  } = useCarFilters(sourceList, searchParams.get('q') || '');
+
+  const [visibleCount, setVisibleCount] = useState(BATCH);
 
   useEffect(() => {
-    api.get('/cars')
-      .then(({ data }) => setCars(data.cars || []))
+    getAllCars()
+      .then(setCars)
       .catch(() => setError('Failed to load cars. Please try again.'))
       .finally(() => setLoading(false));
   }, []);
@@ -47,8 +45,8 @@ const BrowseCarsPage = () => {
   const fetchUserCars = async () => {
     setUserCarsLoading(true);
     try {
-      const { data } = await api.get('/cars/usercars');
-      setUserCars(data.cars || []);
+      const data = await getUserCars();
+      setUserCars(data);
     } catch {
       setError('Failed to load your cars.');
     } finally {
@@ -62,30 +60,7 @@ const BrowseCarsPage = () => {
     setVisibleCount(BATCH);
   };
 
-  const sourceList = viewMyCars ? userCars : cars;
-
-  const companies  = useMemo(() => [...new Set(sourceList.map(c => c.company).filter(Boolean))].sort(), [sourceList]);
-  const driveTypes = useMemo(() => [...new Set(sourceList.map(c => c.driveType).filter(Boolean))].sort(), [sourceList]);
-
-  const filteredCars = useMemo(() => {
-    const q = debouncedSearch.toLowerCase();
-    let result = sourceList.filter(car => {
-      const matchSearch  = !q || car.title?.toLowerCase().includes(q) || car.company?.toLowerCase().includes(q) || car.description?.toLowerCase().includes(q);
-      const matchCompany = !filters.company   || car.company   === filters.company;
-      const matchDrive   = !filters.driveType || car.driveType === filters.driveType;
-      const price        = Number(car.price);
-      const matchMin     = !filters.minPrice  || price >= Number(filters.minPrice);
-      const matchMax     = !filters.maxPrice  || price <= Number(filters.maxPrice);
-      return matchSearch && matchCompany && matchDrive && matchMin && matchMax;
-    });
-    if (filters.sortBy === 'price_asc')  result = [...result].sort((a, b) => Number(a.price) - Number(b.price));
-    if (filters.sortBy === 'price_desc') result = [...result].sort((a, b) => Number(b.price) - Number(a.price));
-    if (filters.sortBy === 'year_desc')  result = [...result].sort((a, b) => Number(b.yearOfManufacture) - Number(a.yearOfManufacture));
-    if (filters.sortBy === 'year_asc')   result = [...result].sort((a, b) => Number(a.yearOfManufacture) - Number(b.yearOfManufacture));
-    return result;
-  }, [sourceList, debouncedSearch, filters]);
-
-  useEffect(() => { setVisibleCount(BATCH); }, [debouncedSearch, filters, viewMyCars]);
+  useEffect(() => { setVisibleCount(BATCH); }, [filteredCars, BATCH]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -99,10 +74,8 @@ const BrowseCarsPage = () => {
     return () => observer.disconnect();
   }, [visibleCount, filteredCars.length]);
 
-  const visibleCars       = filteredCars.slice(0, visibleCount);
-  const hasMore           = visibleCount < filteredCars.length;
-  const activeFilterCount = Object.values(filters).filter(Boolean).length;
-  const clearFilters      = () => setFilters({ company: '', driveType: '', minPrice: '', maxPrice: '', sortBy: '' });
+  const visibleCars = filteredCars.slice(0, visibleCount);
+  const hasMore     = visibleCount < filteredCars.length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -269,7 +242,7 @@ const BrowseCarsPage = () => {
                 {viewMyCars ? 'My Cars' : 'Browse Cars'}
               </h1>
               <p className="text-sm text-gray-400 mt-0.5">
-                {loading ? 'Loading...' : `${filteredCars.length} ${filteredCars.length === 1 ? 'car' : 'cars'} ${debouncedSearch || activeFilterCount > 0 ? 'found' : 'available'}`}
+                {loading ? 'Loading...' : `${filteredCars.length} ${filteredCars.length === 1 ? 'car' : 'cars'} ${searchTerm || activeFilterCount > 0 ? 'found' : 'available'}`}
               </p>
             </div>
           </div>
@@ -331,15 +304,7 @@ const BrowseCarsPage = () => {
         )}
 
         {/* Loading spinner */}
-        {(loading || userCarsLoading) && (
-          <div className="flex flex-col items-center justify-center py-32">
-            <div className="relative w-14 h-14">
-              <div className="absolute inset-0 rounded-full border-[3px] border-gray-100" />
-              <div className="absolute inset-0 rounded-full border-[3px] border-blue-500 border-t-transparent animate-spin" />
-            </div>
-            <p className="mt-5 text-sm text-gray-400 font-medium tracking-wide">Loading cars…</p>
-          </div>
-        )}
+        {(loading || userCarsLoading) && <Spinner label="Loading cars…" />}
 
         {error && <p className="text-center text-red-500 py-10 font-medium">{error}</p>}
 
@@ -351,9 +316,9 @@ const BrowseCarsPage = () => {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No cars found</h3>
             <p className="text-gray-500 text-sm mb-5">
-              {debouncedSearch || activeFilterCount > 0 ? 'Try adjusting your search or clearing the filters.' : 'No cars available right now.'}
+              {searchTerm || activeFilterCount > 0 ? 'Try adjusting your search or clearing the filters.' : 'No cars available right now.'}
             </p>
-            {(debouncedSearch || activeFilterCount > 0) && (
+            {(searchTerm || activeFilterCount > 0) && (
               <button
                 onClick={() => { setSearchTerm(''); clearFilters(); }}
                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors"

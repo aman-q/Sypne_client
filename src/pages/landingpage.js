@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ChevronRight, Shield, Zap, Car, ArrowRight, Star, Users, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import CarCard from '../components/carcard';
-import Navbar from '../components/hedder';
-import api from '../lib/api';
+import CarCard from '../components/CarCard';
+import Navbar from '../components/Navbar';
+import Spinner from '../components/Spinner';
+import { getAllCars } from '../api/carsApi';
 
 const CarLandingPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,8 +14,8 @@ const CarLandingPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/cars')
-      .then(({ data }) => setCars((data.cars || []).slice(0, 6)))
+    getAllCars()
+      .then((cars) => setCars(cars.slice(0, 6)))
       .catch(() => setError('Failed to load cars.'))
       .finally(() => setLoading(false));
   }, []);
@@ -100,15 +101,7 @@ const CarLandingPage = () => {
             </button>
           </div>
 
-          {loading && (
-            <div className="flex flex-col items-center justify-center py-24">
-              <div className="relative w-14 h-14">
-                <div className="absolute inset-0 rounded-full border-[3px] border-gray-100" />
-                <div className="absolute inset-0 rounded-full border-[3px] border-blue-500 border-t-transparent animate-spin" />
-              </div>
-              <p className="mt-5 text-sm text-gray-400 font-medium tracking-wide">Loading cars…</p>
-            </div>
-          )}
+          {loading && <Spinner label="Loading cars…" />}
 
           {error && <p className="text-center text-red-500 py-10">{error}</p>}
 

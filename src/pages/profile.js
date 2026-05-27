@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, Calendar, Car, Edit2, Check, X, Clock, CheckCircle, XCircle } from 'lucide-react';
-import Navbar from '../components/hedder';
-import api from '../lib/api';
+import Navbar from '../components/Navbar';
+import Spinner from '../components/Spinner';
+import { getProfile, getMyBookings, updateProfile } from '../api/userApi';
 
 const statusConfig = {
   pending:   { label: 'Pending',   color: 'bg-yellow-100 text-yellow-800',  icon: Clock },
@@ -81,19 +82,19 @@ const ProfilePage = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [profileRes, bookingsRes] = await Promise.all([
-          api.get('/user/profile/me'),
-          api.get('/user/profile/me/bookings'),
+        const [profileData, bookingsData] = await Promise.all([
+          getProfile(),
+          getMyBookings(),
         ]);
-        setProfile(profileRes.data.user);
+        setProfile(profileData.user);
         setEditForm({
-          fname: profileRes.data.user.fname,
-          lname: profileRes.data.user.lname,
-          phonenumber: profileRes.data.user.phonenumber || '',
+          fname: profileData.user.fname,
+          lname: profileData.user.lname,
+          phonenumber: profileData.user.phonenumber || '',
         });
         setBookings({
-          upcoming: bookingsRes.data.upcoming || [],
-          past: bookingsRes.data.past || [],
+          upcoming: bookingsData.upcoming || [],
+          past: bookingsData.past || [],
         });
       } catch {
         navigate('/login');
@@ -107,7 +108,7 @@ const ProfilePage = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { data } = await api.patch('/user/profile/me', editForm);
+      const data = await updateProfile(editForm);
       setProfile(data.user);
       // update displayed name in navbar
       const stored = JSON.parse(localStorage.getItem('userinfo') || '{}');
@@ -129,9 +130,7 @@ const ProfilePage = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-        </div>
+        <div className="pt-16"><Spinner /></div>
       </div>
     );
   }

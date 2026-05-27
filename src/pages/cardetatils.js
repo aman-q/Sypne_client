@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api from '../lib/api';
+import { getCarById } from '../api/carsApi';
+import { createBooking } from '../api/bookingsApi';
 import {
   ChevronLeft,
   ChevronRight,
@@ -22,7 +23,7 @@ import {
   Settings,
   Zap,
 } from 'lucide-react';
-import Navbar from '../components/hedder';
+import Navbar from '../components/Navbar';
 
 const Spinner = () => (
   <div className="flex flex-col items-center justify-center py-32">
@@ -57,7 +58,7 @@ const CarDetailsPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const { data } = await api.get(`/cars/${id}`);
+        const data = await getCarById(id);
         setCarDetails(data);
       } catch {
         setError('Failed to load car details. Please try again.');
@@ -77,7 +78,7 @@ const CarDetailsPage = () => {
     e.preventDefault();
     setBookingLoading(true);
     try {
-      await api.post('/booking/new-booking', {
+      await createBooking({
         carId: id,
         startDate: new Date(bookingForm.startDate).toISOString(),
         endDate: new Date(bookingForm.endDate).toISOString(),

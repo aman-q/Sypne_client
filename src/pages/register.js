@@ -2,7 +2,7 @@ import React from "react";
 import { Formik, Field, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
-import api from "../lib/api";
+import { register } from '../api/authApi';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ const Register = () => {
 
   const handleSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
-      await api.post("/user/register", {
+      await register({
         email: values.email,
         password: values.password,
         fname: values.firstName,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../lib/api';
+import { createCar } from '../api/carsApi';
 
 const CarUploadForm = () => {
   const navigate = useNavigate();
@@ -64,9 +64,7 @@ const CarUploadForm = () => {
 
     try {
       setSubmitting(true);
-      await api.post('/cars', data, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await createCar(data);
       navigate('/');
     } catch (error) {
       const msg = error.response?.data?.message || 'Car upload failed, please try again.';

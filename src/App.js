@@ -4,7 +4,7 @@ import LoginPage from './pages/login';
 import Register from './pages/register';
 import CarUploadForm from './pages/carUpload';
 import CarLandingPage from './pages/landingpage';
-import ProtectedRoute from './components/protectedRoute';
+import ProtectedRoute from './components/ProtectedRoute';
 import CarDetailsPage from './pages/cardetatils';
 import OTPVerification from './pages/verify-otp';
 import ProfilePage from './pages/profile';

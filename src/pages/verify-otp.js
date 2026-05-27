@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Formik, Form, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import api from '../lib/api';
+import { verifyOtp, resendOtp } from '../api/authApi';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const OTPVerification = () => {
@@ -142,7 +142,7 @@ const OTPVerification = () => {
     }
 
     try {
-      await api.post('/user/verify-otp', { email, otp: values.otpCode });
+      await verifyOtp({ email, otp: values.otpCode });
       localStorage.removeItem('emailuser');
       
       // Show success alert
@@ -171,7 +171,7 @@ const OTPVerification = () => {
     }
 
     try {
-      await api.post('/user/resend-otp', { email });
+      await resendOtp(email);
       
       setResendTimer(60);
       setCanResend(false);
